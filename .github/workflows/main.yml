@@ -44,7 +44,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dotnet-app
+          name: as-application-dev
           path: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
 
   deploy:
