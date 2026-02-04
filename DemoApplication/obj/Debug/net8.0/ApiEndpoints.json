@@ -1,0 +1,12 @@
+[
+  {
+    "ContainingType": "HealthController",
+    "Method": "CheckHealth",
+    "RelativePath": "health",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]

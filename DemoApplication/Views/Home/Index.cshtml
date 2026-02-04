@@ -1,0 +1,134 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="container">
+    <h1>Welcome</h1>
+
+    <p class="subtitle">
+        Learn about <a href="https://learn.microsoft.com/aspnet/core" target="_blank">
+            building Web apps with ASP.NET Core
+        </a>.
+    </p>
+
+    <div class="btn-group">
+        <button class="btn primary" onclick="checkApi()">Check API health</button>
+        <button class="btn secondary" onclick="loadUsers()">Load Users</button>
+        <button class="btn secondary" onclick="loadBlobImage()">
+            Load Blob Image
+        </button>
+    </div>
+    <div class="call-function-box">
+        <input type="text" id="orderId" placeholder="Order ID" />
+        <input type="text" id="statusInput" placeholder="Status" />
+        <button class="btn primary" onclick="callFunction()">Call Function</button>
+    </div>
+
+    <div id="result" class="result-box">
+        <div><strong>Status:</strong> <span id="status">-</span></div>
+        <div><strong>Body:</strong> <span id="body">-</span></div>
+
+        <div style="margin-top:15px;">
+            <img id="blobImage" style="max-width:300px; display:none;" />
+        </div>
+        
+    </div>
+</div>
+<head>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
+</head>
+
+<script>
+    function checkApi() {
+        fetch('/health')
+            .then(res => {
+                document.getElementById('status').innerText = res.status;
+                return res.text();
+            })
+            .then(data => {
+                const respData = JSON.parse(data);
+                document.getElementById('body').innerText = respData.status;
+            })
+            .catch(() => {
+                document.getElementById('status').innerText = 'Error';
+                document.getElementById('body').innerText = 'API not reachable';
+            });
+    }
+
+    function loadUsers() {
+        fetch('/Home/LoadUsers')
+            .then(res => {
+                document.getElementById('status').innerText = res.status;
+                return res.json();
+            })
+            .then(users => {
+                if (!Array.isArray(users)) {
+                    document.getElementById('body').innerText = JSON.stringify(users, null, 2);
+                    return;
+                }
+
+                let text = '';
+                users.forEach(u => {
+                    text += `${u.name} (${u.email})\n`;
+                });
+
+                document.getElementById('body').innerText = text || 'No users found';
+            })
+            .catch(() => {
+                document.getElementById('status').innerText = 'Error';
+                document.getElementById('body').innerText = 'DB connection failed';
+            });
+    }
+    function loadBlobImage() {
+        fetch('/Home/OnGetImageSas?blobName=image.png')
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('body').innerText = data.error;
+                    return;
+                }
+
+                const img = document.getElementById('blobImage');
+                img.src = data.url;
+                img.style.display = 'block';
+
+                document.getElementById('body').innerText = 'Blob loaded using SAS URL';
+            })
+            .catch(() => {
+                document.getElementById('body').innerText = 'Failed to load blob';
+            });
+    }
+    function callFunction() {
+        const orderId = document.getElementById('orderId').value;
+        const status = document.getElementById('statusInput').value;
+
+        if (!orderId) {
+            alert('Order ID is required');
+            return;
+        }
+
+        fetch('/Home/OnPostCallFunction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                orderId: orderId,
+                status: status
+            })
+        })
+            .then(res => {
+                document.getElementById('status').innerText = res.status;
+                return res.json();
+            })
+            .then(data => {
+                document.getElementById('body').innerText =
+                    JSON.stringify(data, null, 2);
+            })
+            .catch(() => {
+                document.getElementById('status').innerText = 'Error';
+                document.getElementById('body').innerText =
+                    'Failed to call Azure Function';
+            });
+    }
+</script>
